@@ -1,4 +1,5 @@
 import math
+import time
 import requests
 import json
 import re
@@ -11,6 +12,15 @@ def convert_size(bytes_size: int):
     p = math.pow(1024, i)
     s = round(bytes_size/p, 2)
     return f"{s} {name[i]}"
+
+def countdown(wait_time: int):
+    while wait_time:
+        minutes, seconds = divmod(wait_time, 60)
+        timer = f"{minutes}:{seconds}"
+        print(timer, end="\r")
+        time.sleep(1)
+        wait_time -= 1
+    return timer
 
 class Uptobox(object):
     def __init__(self):
@@ -52,8 +62,20 @@ class Uptobox(object):
             download_link = info["data"]["dlLink"]
             return download_link
         else:
-            # Need to implement a cooldown for not premium user
-            print("Not implemented yet, will do it later.")
+            request = requests.get(f"{self.api_url}/link?token={self.token}&file_code={code}").text
+            info = json.loads(request)
+            waitingTime = info["data"]["waiting"] + 1
+            waitingToken = info["data"]["waitingToken"]
+            print(f"[Uptobox] You have to wait {waitingTime} seconds to generate a new link.\n[Uptobox] Do you want to wait ?")
+            answer = input("Y for yes, everything else to quit: ")
+            if answer.upper() == "Y":
+                countdown(waitingTime)
+                request = requests.get(f"{self.api_url}/link?token={self.token}&file_code={code}&waitingToken={waitingToken}").text
+                info = json.loads(request)
+                download_link = info["data"]["dlLink"]
+                return download_link
+            else:
+                sys.exit(1)
 
     def get_upload_url(self):
         request = requests.get(f"{self.api_url}/upload?token={self.token}").text
