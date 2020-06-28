@@ -3,6 +3,7 @@ import time
 import requests
 import json
 import re
+import sys
 
 def convert_size(bytes_size: int):
     if bytes_size == 0:
