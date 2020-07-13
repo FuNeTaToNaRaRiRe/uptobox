@@ -24,10 +24,10 @@ def countdown(wait_time: int):
     return timer
 
 class Uptobox(object):
-    def __init__(self):
+    def __init__(self, token):
         self.api_url = "https://uptobox.com/api"
         # Put your token here, find it here: https://uptobox.com/my_account
-        self.token = ""
+        self.token = token
         self.regex = r"https?:\/\/uptobox\.com\/(?P<code>[a-zA-Z0-9]+)"
 
     def get_user_status(self):
