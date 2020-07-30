@@ -4,6 +4,9 @@ import requests
 import json
 import re
 import sys
+import os
+
+from requests_toolbelt import MultipartEncoder
 
 def convert_size(bytes_size: int):
     if bytes_size == 0:
@@ -29,6 +32,9 @@ class Uptobox(object):
         # Put your token here, find it here: https://uptobox.com/my_account
         self.token = token
         self.regex = r"https?:\/\/uptobox\.com\/(?P<code>[a-zA-Z0-9]+)"
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.2; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0"
+        }
 
     def get_user_status(self):
         request = requests.get(f"{self.api_url}/user/me?token={self.token}").text
@@ -84,12 +90,12 @@ class Uptobox(object):
         upload_url = info["data"]["uploadLink"]
         return upload_url
 
-    def upload_file(self, file: str):
-        payload = {
-            "files": open(file, "rb")
-        }
-        request = requests.post(f"https:{self.get_upload_url()}", files=payload).text
+    def upload(self, file: str):
+        field = os.path.basename(file), open(file, "rb")
+        multi = MultipartEncoder(fields={
+            "files": (field)
+        })
+        self.headers["Content-Type"] = multi.content_type
+        request = requests.post(f"https:{self.get_upload_url()}", data=multi, headers=self.headers).text
         info = json.loads(request)
-        file_size = convert_size(info["files"][0]["size"])
-        upload_link = info["files"][0]["url"]
-        return file_size, upload_link
+        return info["files"][0]["url"]
